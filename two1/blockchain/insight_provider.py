@@ -150,7 +150,12 @@ class InsightProvider(BaseProvider):
                 for a in o["scriptPubKey"]["addresses"]:
                     addr_keys.add(a)
 
-        txn = Transaction(txn_json["version"],
+        # If no version assume default
+        tx_version = txn_json.get(
+            'version',
+            Transaction.DEFAULT_TRANSACTION_VERSION
+        )
+        txn = Transaction(tx_version,
                           inputs,
                           outputs,
                           txn_json["locktime"])
