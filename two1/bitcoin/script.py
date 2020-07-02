@@ -591,7 +591,7 @@ class Script(object):
         try:
             self.extract_multisig_sig_info()
             return True
-        except TypeError:
+        except (TypeError, IndexError):
             return False
 
     def get_hash160(self):
