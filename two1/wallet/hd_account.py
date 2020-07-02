@@ -34,13 +34,13 @@ class HDAccount(object):
     """
     PAYOUT_CHAIN = 0
     CHANGE_CHAIN = 1
-    GAP_LIMIT = 20
-    DISCOVERY_INCREMENT = 100
-    MAX_UPDATE_THRESHOLD = 30  # seconds
+    GAP_LIMIT = 100
+    DISCOVERY_INCREMENT = 1000
+    MAX_UPDATE_THRESHOLD = 60  # seconds
 
     def __init__(self, hd_key, name, index, data_provider, cache_manager,
                  testnet=False, last_state=None, skip_discovery=False,
-                 generation_type=''):
+                 generation_type='', gap_limit=GAP_LIMIT, discovery_increment=DISCOVERY_INCREMENT):
         # Take in either public or private key for this account as we
         # can derive everything from it.
         if not isinstance(hd_key, HDKey):
@@ -52,6 +52,8 @@ class HDAccount(object):
         self.data_provider = data_provider
         self.testnet = testnet
         self.generation_type = generation_type
+        self.discovery_increment = discovery_increment
+        self.gap_limit = gap_limit
 
         self.last_indices = [-1, -1]
         self._cache_manager = cache_manager
@@ -98,7 +100,7 @@ class HDAccount(object):
             addr_range = 0
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
-                end = addr_range + self.DISCOVERY_INCREMENT
+                end = addr_range + self.discovery_increment
                 addresses = {i: self.get_address(change, i)
                              for i in range(addr_range, end)}
 
@@ -123,7 +125,7 @@ class HDAccount(object):
 
                     if not addr_has_txns or addr not in txns or \
                        not bool(txns[addr]):
-                        if i - current_last >= self.GAP_LIMIT:
+                        if i - current_last >= self.gap_limit:
                             found_last = True
                             break
 
@@ -145,7 +147,7 @@ class HDAccount(object):
                     if addr_has_txns:
                         current_last = i
 
-                addr_range += self.DISCOVERY_INCREMENT
+                addr_range += self.discovery_increment
 
             self.last_indices[change] = current_last
 
@@ -194,7 +196,7 @@ class HDAccount(object):
         """
         found = {}
         for change in [0, 1]:
-            for i in range(self.last_indices[change] + self.GAP_LIMIT + 1):
+            for i in range(self.last_indices[change] + self.gap_limit + 1):
                 addr = self.get_address(change, i)
 
                 if addr in addresses:
